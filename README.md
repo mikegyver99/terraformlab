@@ -75,9 +75,3 @@ terraform destroy -auto-approve
 - **Least privilege & cost control:**
 	- Use an IAM user/role with minimal permissions required for the resources you create. Test in an isolated account if possible.
 	- Remember to destroy resources when finished to avoid ongoing charges.
-
-If you want, I can:
-- Add a minimal `terraform.tfvars` and `variables.tf` to let you set `region`, `allowed_ssh_cidr`, and a `key_name` safely.
-- Harden the `aws_s3_bucket` resource with recommended settings and add `force_destroy` optionally behind a variable.
-
-Tell me which improvement you'd like and I'll add it.
