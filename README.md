@@ -1,6 +1,7 @@
 # terraformlab
 
-This repository contains Terraform example(s) used for lab exercises and experimentation.
+This repository contains Terraform example(s) used for lab exercises and experimentation.  
+See branches for individual projects etc. (work in progress)  
 
 ## Files Structure for DRY principles
 ```
