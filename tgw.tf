@@ -28,3 +28,50 @@ resource "aws_ec2_transit_gateway_vpc_attachment" "prod_attachment" {
   transit_gateway_id = aws_ec2_transit_gateway.hub.id
   vpc_id             = aws_vpc.prod_vpc.id
 }
+
+# 1. Create the Custom TGW Route Tables
+resource "aws_ec2_transit_gateway_route_table" "prod_rt" {
+  transit_gateway_id = aws_ec2_transit_gateway.hub.id
+  tags = { Name = "Prod-TGW-RT" }
+}
+
+resource "aws_ec2_transit_gateway_route_table" "dev_rt" {
+  transit_gateway_id = aws_ec2_transit_gateway.hub.id
+  tags = { Name = "Dev-TGW-RT" }
+}
+
+resource "aws_ec2_transit_gateway_route_table" "shared_rt" {
+  transit_gateway_id = aws_ec2_transit_gateway.hub.id
+  tags = { Name = "Shared-Services-TGW-RT" }
+}
+
+# 2. Setup Associations (Who uses which table for lookups)
+resource "aws_ec2_transit_gateway_route_table_association" "prod" {
+  transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.prod.id
+  transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.prod_rt.id
+}
+
+resource "aws_ec2_transit_gateway_route_table_association" "dev" {
+  transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.dev.id
+  transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.dev_rt.id
+}
+
+# 3. Setup Propagations (Which networks are visible to whom)
+# Prod can see Shared Services
+resource "aws_ec2_transit_gateway_route_table_propagation" "prod_to_shared" {
+  transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.shared.id
+  transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.prod_rt.id
+}
+
+# Dev can see Shared Services
+resource "aws_ec2_transit_gateway_route_table_propagation" "dev_to_shared" {
+  transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.shared.id
+  transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.dev_rt.id
+}
+
+# Shared Services can see BOTH Prod and Dev
+resource "aws_ec2_transit_gateway_route_table_propagation" "shared_to_all" {
+  for_each = toset([aws_ec2_transit_gateway_vpc_attachment.prod.id, aws_ec2_transit_gateway_vpc_attachment.dev.id])
+  transit_gateway_attachment_id  = each.value
+  transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.shared_rt.id
+}
